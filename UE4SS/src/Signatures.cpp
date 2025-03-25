@@ -358,5 +358,26 @@ namespace RC
                         });
             };
         }
+        auto lua_call_function_by_name_with_arguments_scan_script = working_directory / "UE4SS_Signatures/CallFunctionByNameWithArguments.lua";
+        if (std::filesystem::exists(lua_call_function_by_name_with_arguments_scan_script))
+        {
+            config.ScanOverrides.process_internal = [lua_call_function_by_name_with_arguments_scan_script](std::vector<SignatureContainer>& signature_containers,
+                                                                                       Unreal::Signatures::ScanResult& scan_result) mutable {
+                scan_from_lua_script(
+                        lua_call_function_by_name_with_arguments_scan_script,
+                        signature_containers,
+                        [](void* address) {
+                            Output::send(STR("CallFunctionByNameWithArguments address: {} <- Lua Script\n"), address);
+                            Unreal::UObject::CallFunctionByNameWithArgumentsInternal.assign_address(address);
+                            return DidLuaScanSucceed::Yes;
+                        },
+                        [&](DidLuaScanSucceed did_lua_scan_succeed) {
+                            if (did_lua_scan_succeed == DidLuaScanSucceed::No)
+                            {
+                                scan_result.Errors.emplace_back("Was unable to find AOB for 'CallFunctionByNameWithArguments' via Lua script");
+                            }
+                        });
+            };
+        }
     }
 } // namespace RC
